@@ -1,0 +1,22 @@
+{
+  "name": "@meetmaze/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./core": "./src/core/index.ts",
+    "./domain": "./src/domain/index.ts",
+    "./contracts": "./src/contracts/index.ts",
+    "./modules/rooms": "./src/modules/rooms/index.ts",
+    "./modules/booking": "./src/modules/booking/index.ts",
+    "./modules/experience": "./src/modules/experience/index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.79",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5.3.3"
+  }
+}

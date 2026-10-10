@@ -1,0 +1,94 @@
+{
+  "part": 3,
+  "contractVersion": "1.0.0",
+  "createdAt": "2026-10-10T11:35:17.151Z",
+  "ownedFiles": [
+    "apps/api/src/modules/bookings/**",
+    "apps/api/src/modules/search/**",
+    "apps/api/tests/part3/**",
+    "apps/api/db/migrations/3*",
+    "apps/api/db/seeds/3*",
+    "packages/shared/src/modules/booking/**",
+    "apps/web/src/features/booking/**",
+    "apps/web/src/app/client/page.tsx",
+    "apps/web/src/app/client/search/**",
+    "apps/web/src/app/client/rooms/**",
+    "apps/web/src/app/client/bookings/**",
+    "apps/web/src/app/client/calendar/**",
+    "docs/parts/PART_3*"
+  ],
+  "extraDependencies": {
+    "api": {},
+    "web": {},
+    "shared": {}
+  },
+  "envVars": [
+    {
+      "key": "HOLD_TTL_SECONDS",
+      "default": "300",
+      "description": "Seconds a HELD slot stays active before auto-release"
+    },
+    {
+      "key": "CHECKIN_OPEN_BEFORE_MIN",
+      "default": "10",
+      "description": "Minutes before meeting start that QR check-in opens"
+    },
+    {
+      "key": "DEFAULT_CHECKIN_GRACE_MIN",
+      "default": "15",
+      "description": "Minutes after start before unreleased room is auto-released"
+    }
+  ],
+  "migrations": [
+    "301_part3_history"
+  ],
+  "seeds": [
+    "301_part3_history"
+  ],
+  "providesServices": [
+    "bookings",
+    "search"
+  ],
+  "consumesServices": [
+    "rooms",
+    "insights",
+    "ranking",
+    "notifications"
+  ],
+  "apiEndpoints": [
+    "POST /search/rooms",
+    "GET /rooms/:id/availability",
+    "POST /bookings/check-conflicts",
+    "POST /bookings/hold",
+    "POST /bookings/:id/confirm",
+    "POST /bookings/:id/cancel",
+    "POST /bookings",
+    "GET /bookings",
+    "GET /bookings/:id",
+    "GET /me/calendar",
+    "PATCH /bookings/:id"
+  ],
+  "webRoutes": [
+    "/client",
+    "/client/search",
+    "/client/rooms/[id]",
+    "/client/bookings",
+    "/client/bookings/[id]",
+    "/client/calendar"
+  ],
+  "navItems": [
+    "Home (200)",
+    "Find a room (210)",
+    "My bookings (220)",
+    "Calendar (230)"
+  ],
+  "slotsProvided": [],
+  "slotsUsed": [
+    "booking.card.actions",
+    "booking.detail.sections",
+    "room.detail.sections",
+    "client.home.widgets"
+  ],
+  "assumptions": [],
+  "knownIssues": []
+}

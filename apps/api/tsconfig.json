@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@meetmaze/shared/*": ["../../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src", "db"],
+  "references": [{ "path": "../../packages/shared" }]
+}

@@ -1,13 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "outDir": "dist",
+    "rootDir": ".",
+    "paths": {
+      "@meetmaze/shared/*": ["../../packages/shared/src/*"]
+    }
   },
-  "include": ["src/**/*.ts", "db/**/*.ts"],
+  "include": ["src", "db", "tests"],
   "references": [{ "path": "../../packages/shared" }]
 }

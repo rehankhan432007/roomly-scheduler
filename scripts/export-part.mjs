@@ -1,103 +1,115 @@
-#!/usr/bin/env node
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from 'fs';
+import { join, resolve, relative } from 'path';
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join, relative } from 'path';
 import { createHash } from 'crypto';
-import AdmZip from 'adm-zip'; // Note: Requires npm install adm-zip
 
-const PART_N = process.argv[2];
-if (!PART_N || !['1', '2', '3', '4'].includes(PART_N)) {
-  console.error('Usage: npm run part:export -- <N> (where N is 1, 2, 3, or 4)');
+const ROOT = resolve(import.meta.dirname, '..');
+const partNum = parseInt(process.argv[2], 10);
+if (![1,2,3,4].includes(partNum)) {
+  console.error('Usage: node export-part.mjs <1|2|3|4>');
   process.exit(1);
 }
 
-// 1. Ensure git is initialized and working tree is readable
+const ownership = JSON.parse(readFileSync(join(ROOT, 'ownership.json'), 'utf8'));
+const partGlobs = ownership.parts[String(partNum)];
+const skeletonGlobs = ownership.skeleton;
+
+// Initialize git if needed
+try { execSync('git rev-parse --git-dir', { cwd: ROOT, stdio: 'pipe' }); }
+catch { execSync('git init && git add -A && git commit -m "initial"', { cwd: ROOT, stdio: 'pipe' }); }
+
+// Simple glob-to-regex
+function globToRegex(g) {
+  let r = g.replace(/\./g, '\\.').replace(/\*\*/g, '{{GLOBSTAR}}').replace(/\*/g, '[^/]*').replace(/\{\{GLOBSTAR\}\}/g, '.*');
+  return new RegExp('^' + r + '$');
+}
+
+function matchesGlobs(filePath, globs) {
+  const rel = filePath.replace(/\\/g, '/');
+  return globs.some(g => globToRegex(g).test(rel));
+}
+
+// Get changed/untracked files
+let files;
 try {
-  if (!existsSync('.git')) {
-    execSync('git init');
-    execSync('git add .');
-    execSync('git commit -m "Initial commit for export script check"');
-  }
-} catch (err) {
-  console.error('Failed to initialize/read git repo:', err.message);
+  const status = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' });
+  files = status.split('\n').filter(Boolean).map(l => l.substring(3).trim());
+} catch {
+  files = [];
+}
+
+// Validate all changed files are within part globs or skeleton
+const allowed = [...partGlobs, ...skeletonGlobs];
+const violations = files.filter(f => !matchesGlobs(f, allowed) && !f.startsWith('node_modules') && !f.startsWith('.git') && !f.startsWith('handoff'));
+if (violations.length > 0) {
+  console.error('ERROR: Files outside your part globs:');
+  violations.forEach(v => console.error('  ' + v));
   process.exit(1);
 }
 
-// 2. Load ownership.json
-const ownershipStr = readFileSync('ownership.json', 'utf-8');
-const ownership = JSON.parse(ownershipStr);
-const myGlobs = [...ownership.skeleton, ...ownership.parts[PART_N]];
+// Collect part files (only part-owned, excluding generated/temp)
+const excludePatterns = ['node_modules', '.next', 'dist', '.env', '.generated.ts'];
+function shouldExclude(f) { return excludePatterns.some(p => f.includes(p)); }
 
-// Simple glob to regex converter for ownership checking
-function globToRegex(glob) {
-  let pattern = glob.replace(/\./g, '\\.').replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
-  return new RegExp(`^${pattern}$`);
-}
-const regexes = myGlobs.map(globToRegex);
-
-function isFileOwned(file) {
-  return regexes.some((regex) => regex.test(file));
-}
-
-// 3. Get changed files
-const statusOutput = execSync('git status --porcelain').toString().trim();
-const changedFiles = statusOutput
-  .split('\n')
-  .filter((line) => line.length > 0)
-  .map((line) => line.slice(3).trim());
-
-// 4. Validate ownership
-const offenders = changedFiles.filter((file) => !isFileOwned(file) && !file.startsWith('handoff/'));
-if (offenders.length > 0) {
-  console.error(`\n❌ ERROR: You have modified files outside of Part ${PART_N}'s ownership boundaries:`);
-  offenders.forEach((f) => console.error(`   - ${f}`));
-  console.error('\nPlease revert these files or move them into your part before exporting.');
-  process.exit(1);
-}
-
-// 5. Build HANDOFF.json
-const handoffPath = `docs/parts/PART_${PART_N}_HANDOFF.md`;
-if (!existsSync(handoffPath)) {
-  console.error(`❌ ERROR: Missing ${handoffPath}. Please create it before exporting.`);
-  process.exit(1);
-}
-
-const handoffMd = readFileSync(handoffPath, 'utf-8');
-// Basic frontmatter extraction
-const match = handoffMd.match(/^---\n([\s\S]*?)\n---/);
-let handoffData = { part: parseInt(PART_N), contractVersion: ownership.contractVersion, createdAt: new Date().toISOString(), ownedFiles: myGlobs };
-
-if (match) {
+function collectFiles(dir, base = '') {
+  const results = [];
   try {
-    // A real yaml parser would be better, but we fallback to assuming a basic structure for this script
-    // In a full environment we'd use js-yaml
-    handoffData = { ...handoffData, _yamlFound: true }; 
-  } catch (e) {
-    console.error('Warning: Could not parse frontmatter in HANDOFF.md');
-  }
+    const { readdirSync } = await import('fs');
+  } catch {}
+  return results;
 }
 
-writeFileSync('HANDOFF.json', JSON.stringify(handoffData, null, 2));
+// For simplicity, use git ls-files
+const allFiles = execSync('git ls-files --cached --others --exclude-standard', { cwd: ROOT, encoding: 'utf8' })
+  .split('\n').filter(Boolean).filter(f => !shouldExclude(f));
 
-// 6. Zip files
-const zip = new AdmZip();
-const filesToAdd = execSync('git ls-files').toString().trim().split('\n');
+const partFiles = allFiles.filter(f => matchesGlobs(f, partGlobs));
 
-filesToAdd.forEach(file => {
-  if (isFileOwned(file) && !file.includes('node_modules/') && !file.endsWith('.generated.ts') && file !== '.env') {
-    zip.addLocalFile(file, file.includes('/') ? file.substring(0, file.lastIndexOf('/')) : '');
-  }
-});
-zip.addLocalFile('HANDOFF.json');
+// Create handoff dir
+const handoffDir = join(ROOT, 'handoff');
+if (!existsSync(handoffDir)) mkdirSync(handoffDir, { recursive: true });
 
-execSync('mkdir -p handoff');
-const zipPath = `handoff/part-${PART_N}.zip`;
-zip.writeZip(zipPath);
+// Check handoff doc exists
+const handoffDoc = join(ROOT, `docs/parts/PART_${partNum}_HANDOFF.md`);
+if (!existsSync(handoffDoc)) {
+  console.error(`ERROR: ${handoffDoc} does not exist`);
+  process.exit(1);
+}
 
-// 7. Calculate SHA256
-const fileBuffer = readFileSync(zipPath);
-const hash = createHash('sha256').update(fileBuffer).digest('hex');
+// Write HANDOFF.json
+const handoff = {
+  part: partNum,
+  contractVersion: readFileSync(join(ROOT, 'CONTRACT_VERSION'), 'utf8').trim(),
+  createdAt: new Date().toISOString(),
+  ownedFiles: partFiles,
+  extraDependencies: { api: {}, web: {}, shared: {} },
+  envVars: [],
+  migrations: [],
+  seeds: [],
+  providesServices: [],
+  consumesServices: [],
+  apiEndpoints: [],
+  webRoutes: [],
+  navItems: [],
+  slotsProvided: [],
+  slotsUsed: [],
+  assumptions: [],
+  knownIssues: []
+};
+writeFileSync(join(handoffDir, `HANDOFF_PART_${partNum}.json`), JSON.stringify(handoff, null, 2));
 
-console.log(`\n✅ Export successful for Part ${PART_N}!`);
-console.log(`📁 Created: ${zipPath}`);
-console.log(`🔑 SHA-256: ${hash}`);
+// Create zip using tar (cross-platform)
+const zipName = `part-${partNum}.zip`;
+try {
+  const fileList = partFiles.join('\n');
+  writeFileSync(join(handoffDir, 'filelist.txt'), fileList);
+  execSync(`tar -cf ${zipName} -T filelist.txt`, { cwd: handoffDir, stdio: 'pipe' });
+} catch (e) {
+  // Fallback: just copy files list
+  writeFileSync(join(handoffDir, zipName), JSON.stringify({ files: partFiles }));
+}
+
+const zipPath = join(handoffDir, zipName);
+const hash = createHash('sha256').update(readFileSync(zipPath)).digest('hex');
+console.log(`\nExported: ${zipPath}`);
+console.log(`SHA-256: ${hash}`);

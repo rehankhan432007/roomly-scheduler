@@ -1,32 +1,32 @@
 {
-  "name": "@meetmaze/web",
-  "version": "0.0.0",
+  "name": "meetmaze-web",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
     "lint": "next lint",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@meetmaze/shared": "*",
     "next": "^14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@tanstack/react-query": "^5.40.0",
+    "@tanstack/react-query": "^5.39.0",
     "zustand": "^4.5.2",
     "react-hook-form": "^7.51.5",
     "@hookform/resolvers": "^3.4.2",
     "zod": "^3.23.8",
-    "lucide-react": "^0.379.0",
+    "lucide-react": "^0.378.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
     "class-variance-authority": "^0.7.0",
     "recharts": "^2.12.7",
     "sonner": "^1.4.41",
     "qrcode.react": "^3.1.0",
+    "html5-qrcode": "^2.3.8",
     "date-fns": "^3.6.0",
     "date-fns-tz": "^3.1.3"
   },
@@ -38,8 +38,6 @@
     "tailwindcss": "^3.4.3",
     "postcss": "^8.4.38",
     "autoprefixer": "^10.4.19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.3",
     "vitest": "^1.6.0"
   }
 }

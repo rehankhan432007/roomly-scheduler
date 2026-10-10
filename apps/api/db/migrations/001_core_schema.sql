@@ -1,4 +1,5 @@
-CREATE TABLE users (
+-- 001_core_schema.sql — single source of truth
+CREATE TABLE IF NOT EXISTS users (
   id CHAR(36) PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
@@ -10,7 +11,7 @@ CREATE TABLE users (
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE locations (
+CREATE TABLE IF NOT EXISTS locations (
   id CHAR(36) PRIMARY KEY,
   owner_id CHAR(36) NOT NULL,
   name VARCHAR(160) NOT NULL,
@@ -25,7 +26,7 @@ CREATE TABLE locations (
   CONSTRAINT fk_loc_owner FOREIGN KEY (owner_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE rooms (
+CREATE TABLE IF NOT EXISTS rooms (
   id CHAR(36) PRIMARY KEY,
   owner_id CHAR(36) NOT NULL,
   location_id CHAR(36) NOT NULL,
@@ -55,7 +56,7 @@ CREATE TABLE rooms (
   CONSTRAINT fk_room_loc FOREIGN KEY (location_id) REFERENCES locations(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE equipment_types (
+CREATE TABLE IF NOT EXISTS equipment_types (
   id CHAR(36) PRIMARY KEY,
   code VARCHAR(40) NOT NULL UNIQUE,
   name VARCHAR(80) NOT NULL,
@@ -63,7 +64,7 @@ CREATE TABLE equipment_types (
   category ENUM('DISPLAY','AUDIO_VIDEO','COLLABORATION','CONNECTIVITY','COMFORT','ACCESSIBILITY') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE room_equipment (
+CREATE TABLE IF NOT EXISTS room_equipment (
   id CHAR(36) PRIMARY KEY,
   room_id CHAR(36) NOT NULL,
   equipment_type_id CHAR(36) NOT NULL,
@@ -77,7 +78,7 @@ CREATE TABLE room_equipment (
   CONSTRAINT fk_re_type FOREIGN KEY (equipment_type_id) REFERENCES equipment_types(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE room_blackouts (
+CREATE TABLE IF NOT EXISTS room_blackouts (
   id CHAR(36) PRIMARY KEY,
   room_id CHAR(36) NOT NULL,
   start_at DATETIME(3) NOT NULL, end_at DATETIME(3) NOT NULL,
@@ -87,7 +88,7 @@ CREATE TABLE room_blackouts (
   CONSTRAINT fk_bo_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   id CHAR(36) PRIMARY KEY,
   room_id CHAR(36) NOT NULL,
   client_id CHAR(36) NOT NULL,
@@ -117,7 +118,7 @@ CREATE TABLE bookings (
   CONSTRAINT fk_b_client FOREIGN KEY (client_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE booking_participants (
+CREATE TABLE IF NOT EXISTS booking_participants (
   id CHAR(36) PRIMARY KEY,
   booking_id CHAR(36) NOT NULL,
   user_id CHAR(36) NULL,
@@ -128,7 +129,7 @@ CREATE TABLE booking_participants (
   CONSTRAINT fk_bp_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id CHAR(36) PRIMARY KEY,
   booking_id CHAR(36) NOT NULL UNIQUE,
   room_id CHAR(36) NOT NULL,
@@ -144,7 +145,7 @@ CREATE TABLE reviews (
   CONSTRAINT fk_r_user FOREIGN KEY (reviewer_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE room_issues (
+CREATE TABLE IF NOT EXISTS room_issues (
   id CHAR(36) PRIMARY KEY,
   room_id CHAR(36) NOT NULL,
   booking_id CHAR(36) NULL,
@@ -160,7 +161,7 @@ CREATE TABLE room_issues (
   CONSTRAINT fk_i_user FOREIGN KEY (reporter_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE room_stats (
+CREATE TABLE IF NOT EXISTS room_stats (
   room_id CHAR(36) PRIMARY KEY,
   avg_rating DECIMAL(4,2) NULL,
   bayes_rating DECIMAL(4,2) NULL,
@@ -173,7 +174,7 @@ CREATE TABLE room_stats (
   CONSTRAINT fk_rs_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE slot_demand_stats (
+CREATE TABLE IF NOT EXISTS slot_demand_stats (
   location_id CHAR(36) NOT NULL,
   day_of_week TINYINT UNSIGNED NOT NULL,
   hour_of_day TINYINT UNSIGNED NOT NULL,
@@ -184,7 +185,7 @@ CREATE TABLE slot_demand_stats (
   CONSTRAINT fk_sds_loc FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE chat_sessions (
+CREATE TABLE IF NOT EXISTS chat_sessions (
   id CHAR(36) PRIMARY KEY,
   user_id CHAR(36) NOT NULL,
   state JSON NULL,
@@ -193,7 +194,7 @@ CREATE TABLE chat_sessions (
   CONSTRAINT fk_cs_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE chat_messages (
+CREATE TABLE IF NOT EXISTS chat_messages (
   id CHAR(36) PRIMARY KEY,
   session_id CHAR(36) NOT NULL,
   role ENUM('USER','ASSISTANT','SYSTEM') NOT NULL,
@@ -204,7 +205,7 @@ CREATE TABLE chat_messages (
   CONSTRAINT fk_cm_session FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id CHAR(36) PRIMARY KEY,
   user_id CHAR(36) NOT NULL,
   type ENUM('BOOKING_CONFIRMED','BOOKING_CANCELLED','BOOKING_RELEASED','BOOKING_REMINDER','REVIEW_REQUESTED','ISSUE_REPORTED','ISSUE_RESOLVED','EQUIPMENT_FLAGGED','SYSTEM') NOT NULL,
@@ -217,7 +218,7 @@ CREATE TABLE notifications (
   CONSTRAINT fk_n_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO equipment_types (id, code, name, icon, category) VALUES
+INSERT IGNORE INTO equipment_types (id, code, name, icon, category) VALUES
  ('e0000000-0000-4000-8000-000000000001','PROJECTOR','Projector','Projector','DISPLAY'),
  ('e0000000-0000-4000-8000-000000000002','TV_SCREEN','TV / Display Screen','Tv','DISPLAY'),
  ('e0000000-0000-4000-8000-000000000003','WHITEBOARD','Whiteboard','PenSquare','COLLABORATION'),

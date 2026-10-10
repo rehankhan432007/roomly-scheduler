@@ -1,37 +1,36 @@
-// Database connection via Knex
-import knex, { type Knex } from 'knex';
+import knex, { Knex } from 'knex';
 import { config } from './config.js';
 
-export const db: Knex = knex({
-  client: 'mysql2',
-  connection: {
-    host: config.MYSQL_HOST,
-    port: config.MYSQL_PORT,
-    user: config.MYSQL_USER,
-    password: config.MYSQL_PASSWORD,
-    database: config.MYSQL_DATABASE,
-    typeCast(field: { type: string; string: () => string | null }, next: () => unknown) {
-      if (field.type === 'TINY' || field.type === 'BIT') {
-        const val = field.string();
-        return val ? val === '1' : null;
-      }
-      return next();
-    },
-  },
-  pool: { min: 2, max: 10 },
-  migrations: {
-    directory: './db/migrations',
-    extension: 'ts',
-  },
-  seeds: {
-    directory: './db/seeds',
-    extension: 'ts',
-  },
-});
+let _db: Knex | null = null;
 
-export async function checkDbConnection(): Promise<boolean> {
+export function getDb(): Knex {
+  if (!_db) {
+    _db = knex({
+      client: 'mysql2',
+      connection: {
+        host: config.mysql.host,
+        port: config.mysql.port,
+        user: config.mysql.user,
+        password: config.mysql.password,
+        database: config.mysql.database,
+        typeCast(field: any, next: any) {
+          if (field.type === 'TINY' && field.length === 1) return field.string() === '1';
+          if (field.type === 'JSON') {
+            const val = field.string();
+            try { return val ? JSON.parse(val) : null; } catch { return val; }
+          }
+          return next();
+        },
+      },
+      pool: { min: 2, max: 10 },
+    });
+  }
+  return _db;
+}
+
+export async function pingDb(): Promise<boolean> {
   try {
-    await db.raw('SELECT 1');
+    await getDb().raw('SELECT 1');
     return true;
   } catch {
     return false;

@@ -1,9 +1,8 @@
-// Fixed seed IDs so every part's demo data lines up (B6)
-
+// Fixed seed IDs so all 4 parts' demo data lines up
 export const SEED_IDS = {
   users: {
     owner: 'a0000000-0000-4000-8000-000000000001',
-    client1: 'a0000000-0000-4000-8000-000000000011',
+    client: 'a0000000-0000-4000-8000-000000000011',
     client2: 'a0000000-0000-4000-8000-000000000012',
     client3: 'a0000000-0000-4000-8000-000000000013',
     client4: 'a0000000-0000-4000-8000-000000000014',
@@ -35,12 +34,4 @@ export const SEED_IDS = {
   },
 } as const;
 
-export const DEMO_PASSWORD = 'Demo@1234';
-
-export const SEED_USERS = [
-  { id: SEED_IDS.users.owner, name: 'Anita Rao', email: 'owner@meetmaze.dev', role: 'OWNER' as const, company: 'Orbit Workspaces' },
-  { id: SEED_IDS.users.client1, name: 'Rahul Mehta', email: 'client@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
-  { id: SEED_IDS.users.client2, name: 'Priya Sharma', email: 'priya@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
-  { id: SEED_IDS.users.client3, name: 'Arjun Patel', email: 'arjun@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
-  { id: SEED_IDS.users.client4, name: 'Sneha Gupta', email: 'sneha@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
-] as const;
+export type SeedIds = typeof SEED_IDS;

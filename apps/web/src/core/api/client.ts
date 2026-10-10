@@ -1,21 +1,18 @@
-// API client — wraps fetch, unwraps envelope, throws ApiError
-import { ApiError } from '@meetmaze/shared/core';
-import type { ErrorCode } from '@meetmaze/shared/core';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-
-interface RequestOptions {
-  headers?: Record<string, string>;
-  signal?: AbortSignal;
+function getCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : undefined;
 }
 
 async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  opts?: RequestOptions,
-): Promise<T> {
-  const url = `${BASE_URL}${path}`;
+  opts?: { headers?: Record<string, string> },
+): Promise<{ success: true; data: T; meta?: Record<string, unknown> }> {
+  const url = `${API_BASE}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...opts?.headers,
@@ -24,30 +21,27 @@ async function request<T>(
   const res = await fetch(url, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
     credentials: 'include',
-    signal: opts?.signal,
+    body: body ? JSON.stringify(body) : undefined,
   });
 
-  const json = await res.json().catch(() => null);
+  const json = await res.json();
 
-  if (!res.ok || (json && !json.success)) {
-    const err = json?.error ?? {};
-    throw new ApiError(
-      res.status,
-      (err.code as ErrorCode) ?? 'INTERNAL',
-      err.message ?? 'Request failed',
-      err.details,
-    );
+  if (!json.success) {
+    const err = new Error(json.error?.message || 'API error');
+    (err as any).code = json.error?.code;
+    (err as any).status = res.status;
+    (err as any).details = json.error?.details;
+    throw err;
   }
 
-  return json.data as T;
+  return json;
 }
 
 export const api = {
-  get: <T>(path: string, opts?: RequestOptions) => request<T>('GET', path, undefined, opts),
-  post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, body, opts),
-  patch: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PATCH', path, body, opts),
-  put: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PUT', path, body, opts),
-  delete: <T>(path: string, opts?: RequestOptions) => request<T>('DELETE', path, undefined, opts),
+  get: <T>(path: string) => request<T>('GET', path),
+  post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
+  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
+  patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
+  delete: <T>(path: string) => request<T>('DELETE', path),
 };

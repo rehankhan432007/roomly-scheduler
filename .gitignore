@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+*.generated.ts
+*.generated.js
+handoff/
+coverage/
+.turbo/
+*.tsbuildinfo
+.DS_Store

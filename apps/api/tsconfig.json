@@ -1,21 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "paths": {
-      "@meetmaze/shared/core": ["../../packages/shared/src/core/index.ts"],
-      "@meetmaze/shared/domain": ["../../packages/shared/src/domain/index.ts"],
-      "@meetmaze/shared/contracts": ["../../packages/shared/src/contracts/index.ts"],
-      "@meetmaze/shared/modules/rooms": ["../../packages/shared/src/modules/rooms/index.ts"],
-      "@meetmaze/shared/modules/booking": ["../../packages/shared/src/modules/booking/index.ts"],
-      "@meetmaze/shared/modules/experience": ["../../packages/shared/src/modules/experience/index.ts"]
+      "@meetmaze/shared/*": ["../../../packages/shared/src/*"]
     }
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../../packages/shared" }
-  ]
+  "include": ["src", "db"],
+  "references": [{ "path": "../../packages/shared" }]
 }

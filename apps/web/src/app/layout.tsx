@@ -1,11 +1,17 @@
-import './globals.css';
 import { Inter } from 'next/font/google';
+import './globals.css';
+import Providers from './providers';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata = {
-  title: 'MeetMaze',
-  description: 'Book your perfect meeting space.',
+  title: 'MeetMaze - Meet Without The Maze',
+  description: 'Seamlessly list, discover, and book meeting spaces.',
 };
 
 export default function RootLayout({
@@ -14,8 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-canvas font-sans text-ink">
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

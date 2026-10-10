@@ -1,4 +1,4 @@
-import type { Iso } from '../core/envelope.js';
+export type Iso = string;
 
 export interface RoomSummary {
   id: string;
@@ -22,7 +22,13 @@ export interface RoomSummary {
   maxBookingMinutes: number;
   bufferMinutes: number;
   checkinGraceMinutes: number;
-  equipment: { code: string; name: string; icon: string; quantity: number; status: 'WORKING' | 'FAULTY' | 'MAINTENANCE' }[];
+  equipment: {
+    code: string;
+    name: string;
+    icon: string;
+    quantity: number;
+    status: 'WORKING' | 'FAULTY' | 'MAINTENANCE';
+  }[];
   avgRating: number | null;
   reviewCount: number;
 }
@@ -122,7 +128,16 @@ export interface SearchResponse {
 
 export interface ConflictReport {
   ok: boolean;
-  reasons: ('ROOM_BUSY' | 'BLACKOUT' | 'OUTSIDE_HOURS' | 'DURATION' | 'CAPACITY' | 'EQUIPMENT' | 'PARTICIPANT_BUSY' | 'ROOM_INACTIVE')[];
+  reasons: (
+    | 'ROOM_BUSY'
+    | 'BLACKOUT'
+    | 'OUTSIDE_HOURS'
+    | 'DURATION'
+    | 'CAPACITY'
+    | 'EQUIPMENT'
+    | 'PARTICIPANT_BUSY'
+    | 'ROOM_INACTIVE'
+  )[];
   alternatives: AlternativeSlot[];
 }
 

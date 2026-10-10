@@ -1,2 +1,2 @@
-// Stub file for Part 4's experience module
+// Placeholder — Part 4 owns experience module DTOs
 export {};

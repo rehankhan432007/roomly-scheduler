@@ -1,5 +1,15 @@
-import type { RoomSummary, BookingDto, CreateBookingInput, SearchCriteria, SearchResponse, SlotDto, RoomSignals, BusyWarning, NotificationInput } from './dtos.js';
-import type { Iso } from '../core/envelope.js';
+import type {
+  RoomSummary,
+  BookingDto,
+  CreateBookingInput,
+  SearchCriteria,
+  SearchResponse,
+  SlotDto,
+  BusyWarning,
+  RoomSignals,
+  NotificationInput,
+  Iso,
+} from './dtos.js';
 
 export interface RoomsService {
   getRoomSummary(roomId: string): Promise<RoomSummary | null>;

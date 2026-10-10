@@ -1,36 +1,66 @@
 import type { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { config } from './config.js';
 import { ApiError } from '@meetmaze/shared/core';
-import { z } from 'zod';
-import { logger } from './logger.js';
 
-export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
-  if (err instanceof ApiError) {
-    res.status(err.status).json({
-      success: false,
-      error: { code: err.code, message: err.message, details: err.details },
-    });
-    return;
-  }
-  if (err instanceof z.ZodError) {
-    res.status(400).json({
-      success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Validation failed', details: err.flatten() },
-    });
-    return;
-  }
-  logger.error({ err }, 'Unhandled error');
-  res.status(500).json({ success: false, error: { code: 'INTERNAL', message: 'Internal server error' } });
+export interface JwtPayload {
+  sub: string;
+  role: 'CLIENT' | 'OWNER';
+  email: string;
+  name: string;
 }
 
-export function validate(schemas: { body?: z.ZodTypeAny; query?: z.ZodTypeAny; params?: z.ZodTypeAny }) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (schemas.body) req.body = schemas.body.parse(req.body);
-      if (schemas.query) (req as unknown as { query: unknown }).query = schemas.query.parse(req.query);
-      if (schemas.params) req.params = schemas.params.parse(req.params);
-      next();
-    } catch (e) {
-      next(e);
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
     }
+  }
+}
+
+function extractToken(req: Request): string | null {
+  const cookie = req.cookies?.[config.cookieName];
+  if (cookie) return cookie;
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7);
+  return null;
+}
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+  const token = extractToken(req);
+  if (token) {
+    try {
+      const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
+      req.user = payload;
+    } catch {
+      // Invalid token — continue unauthenticated
+    }
+  }
+  next();
+}
+
+export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
+  const token = extractToken(req);
+  if (!token) {
+    return next(new ApiError(401, 'UNAUTHENTICATED', 'Authentication required'));
+  }
+  try {
+    const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
+    req.user = payload;
+    next();
+  } catch {
+    next(new ApiError(401, 'UNAUTHENTICATED', 'Invalid or expired token'));
+  }
+}
+
+export function requireRole(...roles: ('CLIENT' | 'OWNER')[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(new ApiError(401, 'UNAUTHENTICATED', 'Authentication required'));
+    }
+    if (!roles.includes(req.user.role)) {
+      return next(new ApiError(403, 'FORBIDDEN', 'Insufficient permissions'));
+    }
+    next();
   };
 }

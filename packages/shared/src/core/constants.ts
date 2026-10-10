@@ -1,5 +1,12 @@
-export const CONTRACT_VERSION = '1.0.0';
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
-export const DEFAULT_TZ = 'Asia/Kolkata';
-export const CURRENCY = 'INR';
+export const DEFAULT_TIMEZONE = 'Asia/Kolkata';
+export const DEFAULT_CURRENCY = 'INR';
+export const MAX_PHOTOS = 6;
+export const MIN_CHECKIN_GRACE = 10;
+export const MAX_CHECKIN_GRACE = 15;
+export const MIN_CAPACITY = 1;
+export const MAX_CAPACITY = 500;
+export const MIN_BUFFER_MINUTES = 0;
+export const MAX_BUFFER_MINUTES = 60;
+export const BOOKING_MINUTE_STEP = 15;

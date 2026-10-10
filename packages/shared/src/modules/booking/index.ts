@@ -1,2 +1,2 @@
-// Part 3 owns this module - booking DTOs and zod schemas
-export * from './schemas.js';
+// Placeholder — Part 3 owns booking module DTOs
+export {};

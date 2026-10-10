@@ -1,6 +1,6 @@
 node_modules/
-dist/
 .next/
+dist/
 .env
 *.generated.ts
-handoff/*.zip
+handoff/

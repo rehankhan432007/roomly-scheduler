@@ -1,51 +1,59 @@
-import type { Config } from 'tailwindcss';
-
-const config = {
-  darkMode: ['class'],
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/design-system/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/features/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  prefix: '',
   theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: { '2xl': '1400px' },
-    },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
-        secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
-        destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
-        muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
-        accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
-        popover: { DEFAULT: 'hsl(var(--popover))', foreground: 'hsl(var(--popover-foreground))' },
-        card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+        ink: { DEFAULT: '#071A3D', 800: '#0D2552', 700: '#16336B' },
+        primary: { DEFAULT: '#1F6FEB', 700: '#0B4FC4', 100: '#DCE9FB', 50: '#EEF4FD' },
+        accent: { DEFAULT: '#E8512F', 50: '#FDEEEA' },
+        success: { DEFAULT: '#0E8F83', 50: '#E6F5F3' },
+        warning: { DEFAULT: '#B45309', 50: '#FEF3E2' },
+        danger: { DEFAULT: '#D92D20', 50: '#FEECEB' },
+        muted: '#5F6F8C',
+        line: '#DCE3EF',
+        canvas: '#F6F8FC',
+        surface: '#FFFFFF',
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
+      fontSize: {
+        display: ['40px', '48px'],
+        h1: ['28px', '36px'],
+        h2: ['22px', '30px'],
+        h3: ['18px', '26px'],
+        body: ['15px', '24px'],
+        small: ['13px', '20px'],
+        caption: ['12px', '16px'],
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        control: '10px',
+        card: '16px',
+        pill: '9999px',
       },
-      keyframes: {
-        'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
-        'accordion-up': { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
+      boxShadow: {
+        card: '0 1px 2px rgba(7,26,61,.06), 0 4px 16px rgba(7,26,61,.06)',
+        pop: '0 8px 32px rgba(7,26,61,.16)',
       },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
+      spacing: {
+        4: '4px',
+        8: '8px',
+        12: '12px',
+        16: '16px',
+        20: '20px',
+        24: '24px',
+        32: '32px',
+        48: '48px',
+      }
     },
   },
-  plugins: [require('tailwindcss-animate')],
-} satisfies Config;
-
-export default config;
+  plugins: [],
+};

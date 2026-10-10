@@ -1,5 +1,3 @@
-import type React from 'react';
-
 export type SlotName =
   | 'header.right'
   | 'client.global'
@@ -24,5 +22,5 @@ export interface FeatureManifest {
   id: string;
   part: 1 | 2 | 3 | 4;
   navItems?: NavItem[];
-  slots?: Partial<Record<SlotName, React.ComponentType<unknown>[]>>;
+  slots?: Partial<Record<SlotName, React.ComponentType<Record<string, unknown>>[]>>;
 }

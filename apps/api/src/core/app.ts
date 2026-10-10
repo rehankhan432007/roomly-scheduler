@@ -1,95 +1,91 @@
 import express from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import pinoHttpModule from 'pino-http';
 import { config } from './config.js';
-import { logger } from './logger.js';
-import { errorHandler } from './middleware.js';
+import { errorHandler } from './errors.js';
 import { db } from './db.js';
-import { ServiceRegistryImpl } from './registry.js';
-import type { ModuleContext } from '@meetmaze/shared/contracts';
+import { logger } from './logger.js';
+import { serviceRegistry, getRegisteredServices } from './registry.js';
+import { successResponse } from '@meetmaze/shared/core';
+import type { ApiModule, ModuleContext } from '@meetmaze/shared/contracts';
 
-export async function createApp() {
+export async function createApp(modules: ApiModule[]) {
   const app = express();
-  const services = new ServiceRegistryImpl();
 
-  app.use(helmet());
+  // Global middleware
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors({ origin: config.webUrl, credentials: true }));
   app.use(cookieParser());
   app.use(express.json());
-  const pinoHttp = (pinoHttpModule as any).default ?? pinoHttpModule;
-  app.use(pinoHttp({ logger }));
 
   const apiRouter = express.Router();
 
   // Health check
-  apiRouter.get('/health', async (req, res) => {
+  apiRouter.get('/health', async (_req, res) => {
     let dbOk = false;
-    try { await db.raw('SELECT 1'); dbOk = true; } catch {}
-    res.json({ success: true, data: { status: 'ok', db: dbOk, timestamp: new Date().toISOString() } });
+    try {
+      await db.raw('SELECT 1');
+      dbOk = true;
+    } catch { /* db unreachable */ }
+    const services = getRegisteredServices();
+    res.json(successResponse({
+      status: dbOk ? 'ok' : 'degraded',
+      db: dbOk,
+      services: services.map(s => ({ name: s.name, stub: s.stub })),
+      stubs: config.enableDevStubs,
+    }));
   });
 
   // Modules endpoint
-  apiRouter.get('/_modules', (req, res) => {
-    res.json({
-      success: true,
-      data: services.list().map(s => ({
-        service: s.name,
-        mode: s.stub ? 'stubbed' : 'real',
+  apiRouter.get('/_modules', (_req, res) => {
+    const services = getRegisteredServices();
+    res.json(successResponse({
+      modules: modules.map(m => ({
+        name: m.name,
+        part: m.part,
+        provides: m.provides ?? [],
+        requires: m.requires ?? [],
       })),
-    });
+      services: services.map(s => ({ name: s.name, stub: s.stub })),
+    }));
   });
 
-  const ctx: ModuleContext = {
-    app,
-    router: apiRouter,
-    db,
-    config: config as Record<string, unknown>,
-    logger,
-    services,
-  };
-
-  // Load modules
-  const modules = await import('./modules.generated.js').catch(() => ({ default: [] }));
-  const moduleList = Array.isArray(modules.default) ? modules.default : [];
-
-  for (const mod of moduleList) {
+  // Register all modules
+  for (const mod of modules) {
+    const router = express.Router();
+    const ctx: ModuleContext = {
+      app,
+      router,
+      db,
+      config: config as unknown as Record<string, unknown>,
+      logger,
+      services: serviceRegistry,
+    };
     await mod.register(ctx);
-    logger.info({ module: mod.name, part: mod.part }, 'Module registered');
+    apiRouter.use(router);
+    logger.info(`Module "${mod.name}" (part ${mod.part}) registered`);
   }
 
-  // Load stubs for missing services
+  // Load dev stubs if enabled
   if (config.enableDevStubs) {
-    const stubs = await import('../_dev-stubs/index.js').catch(() => ({ default: async () => {} }));
-    await stubs.default(ctx);
+    const { loadStubs } = await import('../_dev-stubs/loader.js');
+    await loadStubs(serviceRegistry, db, logger, config as Record<string, unknown>, apiRouter);
   }
 
-  // Validate requirements
-  for (const mod of moduleList) {
+  // Verify required services
+  for (const mod of modules) {
     for (const req of mod.requires ?? []) {
-      if (!services.has(req)) {
-        throw new Error(`Module "${mod.name}" requires service "${req}" but it is not provided`);
-      }
-    }
-  }
-
-  // Start jobs
-  if (!config.disableJobs) {
-    for (const mod of moduleList) {
-      for (const job of mod.jobs ?? []) {
-        const interval = setInterval(async () => {
-          try { await job.run(ctx); }
-          catch (e) { logger.error({ job: job.name, err: e }, 'Job error'); }
-        }, job.intervalMs);
-        interval.unref();
-        logger.info({ job: job.name, intervalMs: job.intervalMs }, 'Job started');
+      if (!serviceRegistry.has(req)) {
+        throw new Error(`Module "${mod.name}" requires service "${req}" but it was not provided`);
       }
     }
   }
 
   app.use('/api/v1', apiRouter);
-  app.use(errorHandler as express.ErrorRequestHandler);
 
-  return { app, db, services };
+  // Error handler
+  app.use(errorHandler);
+
+  return app;
 }

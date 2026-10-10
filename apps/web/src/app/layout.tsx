@@ -1,30 +1,26 @@
+// Root layout
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Providers } from '@/core/providers';
 import './globals.css';
-import Providers from './providers';
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
   weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
-export const metadata = {
-  title: 'MeetMaze - Meet Without The Maze',
-  description: 'Seamlessly list, discover, and book meeting spaces.',
+export const metadata: Metadata = {
+  title: 'MeetMaze — Meet Without The Maze',
+  description: 'Seamlessly list, discover, and book meeting spaces — and let smart matching resolve the clashes.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-canvas font-sans text-ink">
-        <Providers>
-          {children}
-        </Providers>
+      <body className="font-sans">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

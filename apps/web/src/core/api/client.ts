@@ -1,46 +1,53 @@
-import { ApiError, type ApiResponse, type ErrorCode } from '@meetmaze/shared/core';
+// API client — wraps fetch, unwraps envelope, throws ApiError
+import { ApiError } from '@meetmaze/shared/core';
+import type { ErrorCode } from '@meetmaze/shared/core';
 
-export const apiClient = {
-  async fetch<T>(path: string, options?: RequestInit): Promise<T> {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-    
-    // In browser, Next.js proxy or direct to API. Include credentials for cookies.
-    const res = await fetch(`${baseUrl}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
-    if (res.status === 204) return {} as T;
+interface RequestOptions {
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+}
 
-    const data: ApiResponse<T> = await res.json().catch(() => null);
-    
-    if (!data) {
-      throw new ApiError(res.status, 'INTERNAL', 'Invalid response from server');
-    }
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  opts?: RequestOptions,
+): Promise<T> {
+  const url = `${BASE_URL}${path}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...opts?.headers,
+  };
 
-    if (!data.success) {
-      throw new ApiError(res.status, data.error.code, data.error.message, data.error.details);
-    }
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include',
+    signal: opts?.signal,
+  });
 
-    return data.data;
-  },
+  const json = await res.json().catch(() => null);
 
-  get<T>(path: string, options?: RequestInit) {
-    return this.fetch<T>(path, { ...options, method: 'GET' });
-  },
-  post<T>(path: string, body?: unknown, options?: RequestInit) {
-    return this.fetch<T>(path, { ...options, method: 'POST', body: JSON.stringify(body) });
-  },
-  put<T>(path: string, body?: unknown, options?: RequestInit) {
-    return this.fetch<T>(path, { ...options, method: 'PUT', body: JSON.stringify(body) });
-  },
-  patch<T>(path: string, body?: unknown, options?: RequestInit) {
-    return this.fetch<T>(path, { ...options, method: 'PATCH', body: JSON.stringify(body) });
-  },
-  delete<T>(path: string, options?: RequestInit) {
-    return this.fetch<T>(path, { ...options, method: 'DELETE' });
+  if (!res.ok || (json && !json.success)) {
+    const err = json?.error ?? {};
+    throw new ApiError(
+      res.status,
+      (err.code as ErrorCode) ?? 'INTERNAL',
+      err.message ?? 'Request failed',
+      err.details,
+    );
   }
+
+  return json.data as T;
+}
+
+export const api = {
+  get: <T>(path: string, opts?: RequestOptions) => request<T>('GET', path, undefined, opts),
+  post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, body, opts),
+  patch: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PATCH', path, body, opts),
+  put: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PUT', path, body, opts),
+  delete: <T>(path: string, opts?: RequestOptions) => request<T>('DELETE', path, undefined, opts),
 };

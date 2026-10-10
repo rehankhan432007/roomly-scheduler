@@ -1,3 +1,15 @@
+// API response envelope types and ApiError class
+
+export interface ApiSuccessResponse<T> {
+  success: true;
+  data: T;
+  meta?: {
+    page?: number;
+    pageSize?: number;
+    total?: number;
+  };
+}
+
 export type ErrorCode =
   | 'VALIDATION_ERROR'
   | 'UNAUTHENTICATED'
@@ -9,16 +21,6 @@ export type ErrorCode =
   | 'CHECKIN_WINDOW'
   | 'RATE_LIMITED'
   | 'INTERNAL';
-
-export interface ApiSuccessResponse<T> {
-  success: true;
-  data: T;
-  meta?: {
-    page?: number;
-    pageSize?: number;
-    total?: number;
-  };
-}
 
 export interface ApiErrorResponse {
   success: false;
@@ -36,17 +38,9 @@ export class ApiError extends Error {
     public status: number,
     public code: ErrorCode,
     message: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
   }
-}
-
-export function successResponse<T>(data: T, meta?: ApiSuccessResponse<T>['meta']): ApiSuccessResponse<T> {
-  return { success: true, data, ...(meta ? { meta } : {}) };
-}
-
-export function errorResponse(code: ErrorCode, message: string, details?: unknown): ApiErrorResponse {
-  return { success: false, error: { code, message, ...(details ? { details } : {}) } };
 }

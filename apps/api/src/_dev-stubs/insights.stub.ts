@@ -1,10 +1,9 @@
-import type { InsightsService, BusyWarning } from '@meetmaze/shared/contracts';
+import type { InsightsService, ModuleContext } from '@meetmaze/shared/contracts';
 
-export class InsightsServiceStub implements InsightsService {
-  async getBusyWarning(): Promise<BusyWarning | null> {
-    return null;
-  }
-  async recompute(): Promise<void> {
-    // no-op
-  }
+export function createInsightsStub(ctx: ModuleContext): InsightsService {
+  const log = ctx.logger;
+  return {
+    async getBusyWarning(q) { log.info(`[STUB] insights.getBusyWarning`); return null; },
+    async recompute() { log.info(`[STUB] insights.recompute`); },
+  };
 }

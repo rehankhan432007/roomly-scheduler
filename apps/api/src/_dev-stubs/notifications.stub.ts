@@ -1,8 +1,8 @@
-import type { NotificationService, NotificationInput } from '@meetmaze/shared/contracts';
-import { logger } from '../core/logger.js';
+import type { NotificationService, ModuleContext } from '@meetmaze/shared/contracts';
 
-export class NotificationServiceStub implements NotificationService {
-  async notify(userId: string, n: NotificationInput): Promise<void> {
-    logger.info({ userId, notification: n }, '[STUB] notifications.notify');
-  }
+export function createNotificationsStub(ctx: ModuleContext): NotificationService {
+  const log = ctx.logger;
+  return {
+    async notify(userId, n) { log.info(`[STUB] notifications.notify(${userId}, ${n.type}: ${n.title})`); },
+  };
 }

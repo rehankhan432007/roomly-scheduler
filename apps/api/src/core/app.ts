@@ -1,91 +1,84 @@
+// Express application setup
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import pinoHttp from 'pino-http';
 import { config } from './config.js';
-import { errorHandler } from './errors.js';
-import { db } from './db.js';
 import { logger } from './logger.js';
-import { serviceRegistry, getRegisteredServices } from './registry.js';
-import { successResponse } from '@meetmaze/shared/core';
-import type { ApiModule, ModuleContext } from '@meetmaze/shared/contracts';
+import { ApiError } from './errors.js';
+import { generalRateLimiter } from './middleware.js';
+import type { ErrorCode } from '@meetmaze/shared/core';
 
-export async function createApp(modules: ApiModule[]) {
+export function createApp(): express.Express {
   const app = express();
 
-  // Global middleware
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(cors({ origin: config.webUrl, credentials: true }));
+  // Security
+  app.use(helmet());
+  app.use(
+    cors({
+      origin: config.WEB_URL,
+      credentials: true,
+    }),
+  );
+
+  // Parsing
+  app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
-  app.use(express.json());
 
-  const apiRouter = express.Router();
-
-  // Health check
-  apiRouter.get('/health', async (_req, res) => {
-    let dbOk = false;
-    try {
-      await db.raw('SELECT 1');
-      dbOk = true;
-    } catch { /* db unreachable */ }
-    const services = getRegisteredServices();
-    res.json(successResponse({
-      status: dbOk ? 'ok' : 'degraded',
-      db: dbOk,
-      services: services.map(s => ({ name: s.name, stub: s.stub })),
-      stubs: config.enableDevStubs,
-    }));
-  });
-
-  // Modules endpoint
-  apiRouter.get('/_modules', (_req, res) => {
-    const services = getRegisteredServices();
-    res.json(successResponse({
-      modules: modules.map(m => ({
-        name: m.name,
-        part: m.part,
-        provides: m.provides ?? [],
-        requires: m.requires ?? [],
-      })),
-      services: services.map(s => ({ name: s.name, stub: s.stub })),
-    }));
-  });
-
-  // Register all modules
-  for (const mod of modules) {
-    const router = express.Router();
-    const ctx: ModuleContext = {
-      app,
-      router,
-      db,
-      config: config as unknown as Record<string, unknown>,
+  // Logging
+  app.use(
+    pinoHttp({
       logger,
-      services: serviceRegistry,
-    };
-    await mod.register(ctx);
-    apiRouter.use(router);
-    logger.info(`Module "${mod.name}" (part ${mod.part}) registered`);
-  }
+      autoLogging: {
+        ignore: (req) => req.url === '/api/v1/health',
+      },
+    }),
+  );
 
-  // Load dev stubs if enabled
-  if (config.enableDevStubs) {
-    const { loadStubs } = await import('../_dev-stubs/loader.js');
-    await loadStubs(serviceRegistry, db, logger, config as Record<string, unknown>, apiRouter);
-  }
+  // General rate limit
+  app.use(generalRateLimiter);
 
-  // Verify required services
-  for (const mod of modules) {
-    for (const req of mod.requires ?? []) {
-      if (!serviceRegistry.has(req)) {
-        throw new Error(`Module "${mod.name}" requires service "${req}" but it was not provided`);
+  // Health check is mounted in loader after modules
+
+  // 404 handler for unmatched routes
+  app.use('/api/v1/*', (_req, res) => {
+    res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND' as ErrorCode, message: 'Endpoint not found' },
+    });
+  });
+
+  // Global error handler
+  app.use(
+    (
+      err: Error,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction,
+    ) => {
+      if (err instanceof ApiError) {
+        res.status(err.status).json({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+            details: err.details,
+          },
+        });
+        return;
       }
-    }
-  }
 
-  app.use('/api/v1', apiRouter);
-
-  // Error handler
-  app.use(errorHandler);
+      logger.error(err, 'Unhandled error');
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL' as ErrorCode,
+          message: 'An unexpected error occurred',
+        },
+      });
+    },
+  );
 
   return app;
 }

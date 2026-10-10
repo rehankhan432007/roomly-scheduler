@@ -1,16 +1,17 @@
 {
   "name": "@meetmaze/api",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/core/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ --ext .ts",
     "test": "vitest run",
-    "db:migrate": "tsx db/run-migrations.ts",
-    "db:seed": "tsx db/run-seeds.ts",
-    "db:reset": "tsx db/reset.ts"
+    "db:migrate": "knex migrate:latest --knexfile src/core/knexfile.ts",
+    "db:seed": "knex seed:run --knexfile src/core/knexfile.ts",
+    "db:reset": "knex migrate:rollback --all --knexfile src/core/knexfile.ts && knex migrate:latest --knexfile src/core/knexfile.ts && knex seed:run --knexfile src/core/knexfile.ts"
   },
   "dependencies": {
     "@meetmaze/shared": "*",
@@ -26,6 +27,7 @@
     "express-rate-limit": "^7.2.0",
     "pino": "^9.1.0",
     "pino-http": "^10.1.0",
+    "pino-pretty": "^11.1.0",
     "qrcode": "^1.5.3",
     "nanoid": "^5.0.7",
     "uuid": "^9.0.1",
@@ -39,9 +41,9 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/cookie-parser": "^1.4.7",
-    "@types/qrcode": "^1.5.5",
     "@types/uuid": "^9.0.8",
-    "tsx": "^4.10.5",
+    "@types/qrcode": "^1.5.5",
+    "tsx": "^4.11.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0",
     "supertest": "^7.0.0",

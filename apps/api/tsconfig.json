@@ -3,10 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "paths": {
-      "@meetmaze/shared/*": ["../../../packages/shared/src/*"]
-    }
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
-  "include": ["src", "db"],
+  "include": ["src/**/*.ts", "db/**/*.ts"],
   "references": [{ "path": "../../packages/shared" }]
 }

@@ -1,30 +1,43 @@
+// Zod-validated environment configuration
+import { z } from 'zod';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-export const config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  apiPort: parseInt(process.env.API_PORT || '4000', 10),
-  webUrl: process.env.WEB_URL || 'http://localhost:3000',
-  mysql: {
-    host: process.env.MYSQL_HOST || 'localhost',
-    port: parseInt(process.env.MYSQL_PORT || '3306', 10),
-    user: process.env.MYSQL_USER || 'meetmaze',
-    password: process.env.MYSQL_PASSWORD || 'meetmaze',
-    database: process.env.MYSQL_DATABASE || 'meetmaze',
-  },
-  jwt: {
-    secret: process.env.JWT_SECRET || 'change-me',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  },
-  cookieName: process.env.COOKIE_NAME || 'mm_token',
-  holdTtlSeconds: parseInt(process.env.HOLD_TTL_SECONDS || '300', 10),
-  checkinOpenBeforeMin: parseInt(process.env.CHECKIN_OPEN_BEFORE_MIN || '10', 10),
-  defaultCheckinGraceMin: parseInt(process.env.DEFAULT_CHECKIN_GRACE_MIN || '15', 10),
-  disableJobs: process.env.DISABLE_JOBS === 'true',
-  enableDevStubs: process.env.ENABLE_DEV_STUBS !== 'false',
-  llm: {
-    provider: process.env.LLM_PROVIDER || 'none',
-    apiKey: process.env.LLM_API_KEY || '',
-    model: process.env.LLM_MODEL || '',
-  },
-} as const;
+const configSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  API_PORT: z.coerce.number().default(4000),
+  WEB_URL: z.string().default('http://localhost:3000'),
+  MYSQL_HOST: z.string().default('localhost'),
+  MYSQL_PORT: z.coerce.number().default(3306),
+  MYSQL_USER: z.string().default('meetmaze'),
+  MYSQL_PASSWORD: z.string().default('meetmaze'),
+  MYSQL_DATABASE: z.string().default('meetmaze'),
+  JWT_SECRET: z.string().default('change-me'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+  COOKIE_NAME: z.string().default('mm_token'),
+  HOLD_TTL_SECONDS: z.coerce.number().default(300),
+  CHECKIN_OPEN_BEFORE_MIN: z.coerce.number().default(10),
+  DEFAULT_CHECKIN_GRACE_MIN: z.coerce.number().default(15),
+  DISABLE_JOBS: z
+    .string()
+    .transform((v) => v === 'true')
+    .default('false'),
+  ENABLE_DEV_STUBS: z
+    .string()
+    .transform((v) => v === 'true')
+    .default('true'),
+  LLM_PROVIDER: z.enum(['none', 'gemini', 'openai', 'anthropic']).default('none'),
+  LLM_API_KEY: z.string().default(''),
+  LLM_MODEL: z.string().default(''),
+});
+
+export type Config = z.infer<typeof configSchema>;
+
+const parsed = configSchema.safeParse(process.env);
+if (!parsed.success) {
+  console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors);
+  process.exit(1);
+}
+
+export const config: Config = parsed.data;

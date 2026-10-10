@@ -1,41 +1,24 @@
-import type { Request, Response, NextFunction } from 'express';
-import type { ZodType } from 'zod';
-import { ApiError, errorResponse } from '@meetmaze/shared/core';
-import { logger } from './logger.js';
+// Custom error classes for the API
+import { ApiError } from '@meetmaze/shared/core';
 
-export function validate(schemas: {
-  body?: ZodType;
-  query?: ZodType;
-  params?: ZodType;
-}) {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      if (schemas.body) {
-        req.body = schemas.body.parse(req.body);
-      }
-      if (schemas.query) {
-        req.query = schemas.query.parse(req.query) as Record<string, string>;
-      }
-      if (schemas.params) {
-        req.params = schemas.params.parse(req.params);
-      }
-      next();
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'issues' in err) {
-        next(new ApiError(400, 'VALIDATION_ERROR', 'Validation failed', (err as { issues: unknown }).issues));
-      } else {
-        next(err);
-      }
-    }
-  };
+export { ApiError };
+
+export function notFound(message = 'Resource not found'): ApiError {
+  return new ApiError(404, 'NOT_FOUND', message);
 }
 
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
-  if (err instanceof ApiError) {
-    res.status(err.status).json(errorResponse(err.code, err.message, err.details));
-    return;
-  }
+export function unauthorized(message = 'Authentication required'): ApiError {
+  return new ApiError(401, 'UNAUTHENTICATED', message);
+}
 
-  logger.error({ err }, 'Unhandled error');
-  res.status(500).json(errorResponse('INTERNAL', 'Internal server error'));
+export function forbidden(message = 'Access denied'): ApiError {
+  return new ApiError(403, 'FORBIDDEN', message);
+}
+
+export function conflict(message: string, details?: unknown): ApiError {
+  return new ApiError(409, 'CONFLICT', message, details);
+}
+
+export function validationError(message: string, details?: unknown): ApiError {
+  return new ApiError(400, 'VALIDATION_ERROR', message, details);
 }

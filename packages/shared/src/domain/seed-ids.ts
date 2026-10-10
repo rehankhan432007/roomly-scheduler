@@ -1,25 +1,26 @@
-/** Fixed seed IDs so every part's demo data lines up */
+// Fixed seed IDs so every part's demo data lines up (B6)
+
 export const SEED_IDS = {
   users: {
-    owner1: 'a0000000-0000-4000-8000-000000000001',
+    owner: 'a0000000-0000-4000-8000-000000000001',
     client1: 'a0000000-0000-4000-8000-000000000011',
     client2: 'a0000000-0000-4000-8000-000000000012',
     client3: 'a0000000-0000-4000-8000-000000000013',
     client4: 'a0000000-0000-4000-8000-000000000014',
   },
   locations: {
-    indiranagarHub: 'b0000000-0000-4000-8000-000000000001',
-    koramanglaTower: 'b0000000-0000-4000-8000-000000000002',
+    indiranagar: 'b0000000-0000-4000-8000-000000000001',
+    koramangala: 'b0000000-0000-4000-8000-000000000002',
   },
   rooms: {
-    auroraBoardroom: 'c0000000-0000-4000-8000-000000000001',
-    sparkHuddle: 'c0000000-0000-4000-8000-000000000002',
-    zenPod: 'c0000000-0000-4000-8000-000000000003',
-    summitHall: 'c0000000-0000-4000-8000-000000000004',
-    ideationStudio: 'c0000000-0000-4000-8000-000000000005',
-    atlasRoom: 'c0000000-0000-4000-8000-000000000006',
+    aurora: 'c0000000-0000-4000-8000-000000000001',
+    spark: 'c0000000-0000-4000-8000-000000000002',
+    zen: 'c0000000-0000-4000-8000-000000000003',
+    summit: 'c0000000-0000-4000-8000-000000000004',
+    ideation: 'c0000000-0000-4000-8000-000000000005',
+    atlas: 'c0000000-0000-4000-8000-000000000006',
   },
-  equipmentTypes: {
+  equipment: {
     projector: 'e0000000-0000-4000-8000-000000000001',
     tvScreen: 'e0000000-0000-4000-8000-000000000002',
     whiteboard: 'e0000000-0000-4000-8000-000000000003',
@@ -34,4 +35,12 @@ export const SEED_IDS = {
   },
 } as const;
 
-export const SEED_PASSWORD = 'Demo@1234';
+export const DEMO_PASSWORD = 'Demo@1234';
+
+export const SEED_USERS = [
+  { id: SEED_IDS.users.owner, name: 'Anita Rao', email: 'owner@meetmaze.dev', role: 'OWNER' as const, company: 'Orbit Workspaces' },
+  { id: SEED_IDS.users.client1, name: 'Rahul Mehta', email: 'client@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
+  { id: SEED_IDS.users.client2, name: 'Priya Sharma', email: 'priya@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
+  { id: SEED_IDS.users.client3, name: 'Arjun Patel', email: 'arjun@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
+  { id: SEED_IDS.users.client4, name: 'Sneha Gupta', email: 'sneha@meetmaze.dev', role: 'CLIENT' as const, company: 'Nimbus Tech' },
+] as const;

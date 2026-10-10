@@ -1,3 +1,5 @@
+// Enums derived from the database schema (001_core_schema.sql)
+
 export const UserRole = {
   CLIENT: 'CLIENT',
   OWNER: 'OWNER',
@@ -30,13 +32,6 @@ export const RoomStatus = {
 } as const;
 export type RoomStatus = (typeof RoomStatus)[keyof typeof RoomStatus];
 
-export const EquipmentStatus = {
-  WORKING: 'WORKING',
-  FAULTY: 'FAULTY',
-  MAINTENANCE: 'MAINTENANCE',
-} as const;
-export type EquipmentStatus = (typeof EquipmentStatus)[keyof typeof EquipmentStatus];
-
 export const EquipmentCategory = {
   DISPLAY: 'DISPLAY',
   AUDIO_VIDEO: 'AUDIO_VIDEO',
@@ -46,6 +41,13 @@ export const EquipmentCategory = {
   ACCESSIBILITY: 'ACCESSIBILITY',
 } as const;
 export type EquipmentCategory = (typeof EquipmentCategory)[keyof typeof EquipmentCategory];
+
+export const EquipmentStatus = {
+  WORKING: 'WORKING',
+  FAULTY: 'FAULTY',
+  MAINTENANCE: 'MAINTENANCE',
+} as const;
+export type EquipmentStatus = (typeof EquipmentStatus)[keyof typeof EquipmentStatus];
 
 export const BookingStatus = {
   HELD: 'HELD',
@@ -57,6 +59,13 @@ export const BookingStatus = {
   RELEASED: 'RELEASED',
 } as const;
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
+
+export const ParticipantStatus = {
+  INVITED: 'INVITED',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED',
+} as const;
+export type ParticipantStatus = (typeof ParticipantStatus)[keyof typeof ParticipantStatus];
 
 export const BookingSource = {
   WEB: 'WEB',
@@ -93,16 +102,19 @@ export const NotificationType = {
 } as const;
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
 
-export const ParticipantStatus = {
-  INVITED: 'INVITED',
-  ACCEPTED: 'ACCEPTED',
-  DECLINED: 'DECLINED',
-} as const;
-export type ParticipantStatus = (typeof ParticipantStatus)[keyof typeof ParticipantStatus];
-
 export const ChatRole = {
   USER: 'USER',
   ASSISTANT: 'ASSISTANT',
   SYSTEM: 'SYSTEM',
 } as const;
 export type ChatRole = (typeof ChatRole)[keyof typeof ChatRole];
+
+export const SlotState = {
+  FREE: 'FREE',
+  BOOKED: 'BOOKED',
+  HELD: 'HELD',
+  BLACKOUT: 'BLACKOUT',
+  CLOSED: 'CLOSED',
+  PAST: 'PAST',
+} as const;
+export type SlotState = (typeof SlotState)[keyof typeof SlotState];
